@@ -1,0 +1,67 @@
+name: Build VST3 Plugin
+
+on:
+  workflow_dispatch: # Allows you to run this manually
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Web UI
+        run: |
+          cd webui
+          npm install
+          npx vite build
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Plugin
+        run: cmake --build build --config Release
+
+      - name: Upload VST3 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DT2-Emulator-Mac-VST3
+          path: build/**/*_artefacts/Release/VST3/*.vst3name: Build VST3 Plugin
+
+on:
+  workflow_dispatch: # Allows you to run this manually
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build Web UI
+        run: |
+          cd webui
+          npm install
+          npx vite build
+
+      - name: Configure CMake
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build Plugin
+        run: cmake --build build --config Release
+
+      - name: Upload VST3 Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DT2-Emulator-Mac-VST3
+          path: build/**/*_artefacts/Release/VST3/*.vst3

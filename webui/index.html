@@ -99,6 +99,11 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            cursor: pointer; /* Makes it look clickable */
+        }
+        
+        .oled-param.selected .param-box:hover {
+            background-color: rgba(196, 215, 245, 0.2);
         }
     </style>
 </head>
@@ -109,13 +114,13 @@
         <!-- OLED Screen -->
         <div class="oled-screen">
             <div class="oled-header">
-                <span>A03 Oneshot:LAW TOOL</span>
+                <span>A03 ONESHOT:LAW TOOL</span>
             </div>
 
             <!-- 4x2 Parameter Grid -->
             <div class="oled-grid">
                 
-                <div class="oled-param selected">
+                <div class="oled-param selected" id="smp-loader">
                     <div class="param-box">
                         <span class="param-label">SMP</span>
                         <span class="param-value">5</span>
@@ -174,5 +179,58 @@
             </div>
         </div>
     </div>
+
+    <!-- Sample Loading Logic -->
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const smpBox = document.getElementById('smp-loader');
+        const smpLabel = smpBox.querySelector('.param-value');
+        const headerText = document.querySelector('.oled-header span');
+
+        smpBox.addEventListener('click', () => {
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'audio/wav, audio/mpeg, audio/aiff, audio/flac';
+
+            fileInput.onchange = async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                smpLabel.innerText = "..."; 
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+                    const leftChannel = Array.from(audioBuffer.getChannelData(0));
+                    const rightChannel = audioBuffer.numberOfChannels > 1 
+                        ? Array.from(audioBuffer.getChannelData(1)) 
+                        : leftChannel; 
+
+                    const sampleId = 'usr_' + Date.now();
+                    const sampleName = file.name.substring(0, 10).toUpperCase();
+
+                    if (window.JUCEBridge) {
+                        window.JUCEBridge.emit('addUserSample', {
+                            id: sampleId,
+                            name: sampleName,
+                            L: leftChannel,
+                            R: rightChannel
+                        });
+                    } else {
+                        console.log("Decoded ready for C++:", sampleName, leftChannel.length, "samples");
+                    }
+
+                    smpLabel.innerText = "U1";
+                    headerText.innerText = `U01 ONESHOT:${sampleName}`;
+
+                } catch (err) {
+                    console.error("Error decoding audio:", err);
+                    smpLabel.innerText = "ERR";
+                }
+            };
+            fileInput.click();
+        });
+    </script>
 </body>
 </html>

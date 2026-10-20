@@ -1,0 +1,45 @@
+# Builds the VST3 and AU on a GitHub-hosted Mac and publishes them as a downloadable artifact.
+# Push this folder to a GitHub repository, then open Actions → "Build macOS plugin" → Run workflow.
+name: Build macOS plugin
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -B build -G Xcode -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
+
+      - name: Build
+        run: cmake --build build --config Release -- -quiet
+
+      - name: Collect and ad-hoc sign bundles
+        run: |
+          mkdir -p dist
+          cp -R "build/DT2Emulator_artefacts/Release/VST3/DT2 Emulator.vst3" dist/
+          cp -R "build/DT2Emulator_artefacts/Release/AU/DT2 Emulator.component" dist/
+          codesign --force --deep --sign - "dist/DT2 Emulator.vst3"
+          codesign --force --deep --sign - "dist/DT2 Emulator.component"
+          ditto -c -k --keepParent "dist/DT2 Emulator.vst3" "dist/DT2-Emulator-VST3.zip"
+          ditto -c -k --keepParent "dist/DT2 Emulator.component" "dist/DT2-Emulator-AU.zip"
+
+      - name: Validate AU
+        continue-on-error: true
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          cp -R "dist/DT2 Emulator.component" ~/Library/Audio/Plug-Ins/Components/
+          killall -9 AudioComponentRegistrar || true
+          auval -v aumu Dt2p Dt2e
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DT2-Emulator-macOS
+          path: |
+            dist/DT2-Emulator-VST3.zip
+            dist/DT2-Emulator-AU.zip

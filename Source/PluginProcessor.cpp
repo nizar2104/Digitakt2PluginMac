@@ -3,13 +3,6 @@
 
 namespace
 {
-juce::AudioProcessor::BusesProperties makeBuses()
-{
-    auto b = juce::AudioProcessor::BusesProperties().withOutput ("Main", juce::AudioChannelSet::stereo(), true);
-    for (int t = 1; t <= 16; ++t)
-        b = b.withOutput ("Track " + juce::String (t), juce::AudioChannelSet::stereo(), false);
-    return b;
-}
 constexpr juce::int32 kMagic = 0x44543253; // 'DT2S'
 } // namespace
 

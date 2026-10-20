@@ -54,4 +54,8 @@ private:
     std::shared_ptr<const dt2::Pool> pool;
     juce::String stateJson;
     int blockSize = 512;
-    juce::
+    juce::AudioBuffer<float> scratch;
+
+    void publishPool();
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Digitakt2Processor)
+};

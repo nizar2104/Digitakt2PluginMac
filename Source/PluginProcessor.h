@@ -41,13 +41,17 @@ public:
     std::atomic<int> stateVersion { 0 }; // bumped when the DAW restores a project
 
 private:
+    static juce::AudioProcessor::BusesProperties makeBuses()
+    {
+        auto b = juce::AudioProcessor::BusesProperties().withOutput ("Main", juce::AudioChannelSet::stereo(), true);
+        for (int t = 1; t <= 16; ++t)
+            b = b.withOutput ("Track " + juce::String (t), juce::AudioChannelSet::stereo(), false);
+        return b;
+    }
+
     dt2::Engine engine;
     dt2::Pool factory;
     std::shared_ptr<const dt2::Pool> pool;
     juce::String stateJson;
     int blockSize = 512;
-    juce::AudioBuffer<float> scratch;
-
-    void publishPool();
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Digitakt2Processor)
-};
+    juce::
